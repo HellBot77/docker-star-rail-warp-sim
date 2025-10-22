@@ -6,17 +6,15 @@ RUN git clone https://github.com/mikeli0623/star-rail-warp-sim.git && \
     ([[ "$TAG" = "latest" ]] || git checkout ${TAG}) && \
     rm -rf .git
 
-FROM node:alpine AS build
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 
 WORKDIR /star-rail-warp-sim
 COPY --from=base /git/star-rail-warp-sim .
-RUN cat .yarnrc.yml
 RUN corepack enable && \
     corepack install && \
-    yarn && \
-    export NODE_ENV=production && \
+    yarn install --frozen-lockfile && \
     yarn build
 
-FROM lipanski/docker-static-website
+FROM joseluisq/static-web-server
 
-COPY --from=build /star-rail-warp-sim/build .
+COPY --from=build /star-rail-warp-sim/build ./public
